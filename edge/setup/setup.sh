@@ -19,7 +19,7 @@ NC='\033[0m' # No Color
 
 # script configuration
 BASE_URL='https://raw.githubusercontent.com/KeyserDSoze/live-video-analytics/master/edge/setup' # location of remote files used by the script
-DEFAULT_REGION='centralus'
+DEFAULT_REGION='westeurope'
 ENV_FILE='edge-deployment/.env'
 APP_SETTINGS_FILE='appsettings.json'
 VM_CREDENTIALS_FILE='vm-edge-device-credentials.txt'
@@ -33,7 +33,7 @@ ROLE_DEFINITION_FILE='role_definition.json'
 RESOURCE_GROUP='lva-sample-resources'
 IOT_EDGE_VM_NAME='lva-sample-iot-edge-device'
 IOT_EDGE_VM_ADMIN='lvaadmin'
-IOT_EDGE_VM_PWD="Password@$(shuf -i 1000-9999 -n 1)"
+IOT_EDGE_VM_PWD="lvaPwdKS@$(shuf -i 1000-999999 -n 1)"
 CLOUD_SHELL_FOLDER="$HOME/clouddrive/lva-sample"
 APPDATA_FOLDER_ON_DEVICE="/var/lib/azuremediaservices"
 
@@ -146,6 +146,10 @@ if ! $EXISTING; then
     az group create --name ${RESOURCE_GROUP} --location ${REGION} -o none
     checkForError
 fi
+
+echo -e "\n${GREEN}Please specify a good password for your VM.${NC}"
+read -p ">> " IOT_EDGE_VM_PWD
+echo -e "your password will be ${IOT_EDGE_VM_PWD}."
 
 # deploy resources using a template
 echo -e "
