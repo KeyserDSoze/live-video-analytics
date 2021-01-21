@@ -44,7 +44,7 @@
             "properties": {
                 "accessTier": "Hot",
                 "isHnsEnabled": true,
-                "allowBlobPublicAccess": false,
+                "allowBlobPublicAccess": false
             },
             "sku": {
                 "name": "Standard_LRS"
