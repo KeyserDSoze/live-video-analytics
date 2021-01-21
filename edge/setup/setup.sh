@@ -162,7 +162,7 @@ This typically takes about 6 minutes, but the time may vary.
 The resources are defined in a template here:
 ${BLUE}${ARM_TEMPLATE_URL}${NC}"
 
-ROLE_DEFINITION_NAME=$(az deployment group create --resource-group $RESOURCE_GROUP --template-uri $ARM_TEMPLATE_URL --query properties.outputs.roleName.value | tr -d \")
+ROLE_DEFINITION_NAME=$(az deployment group create --resource-group $RESOURCE_GROUP --template-uri $ARM_TEMPLATE_URL --parameters '{ \"namePrefix\": { \"value\": \"$MY_BEST_NAME\" } }' --query properties.outputs.roleName.value | tr -d \")
 checkForError
 
 # query the resource group to see what has been deployed
@@ -175,7 +175,8 @@ echo "${RESOURCES}"
 IOTHUB=$(echo "${RESOURCES}" | awk '$2 ~ /Microsoft.Devices\/IotHubs$/ {print $1}')
 AMS_ACCOUNT=$(echo "${RESOURCES}" | awk '$2 ~ /Microsoft.Media\/mediaservices$/ {print $1}')
 VNET=$(echo "${RESOURCES}" | awk '$2 ~ /Microsoft.Network\/virtualNetworks$/ {print $1}')
-EDGE_DEVICE="lva-sample-device"
+PIP=$(echo "${RESOURCES}" | awk '$2 ~ /Microsoft.Network\/publicIpAddresses$/ {print $1}')
+EDGE_DEVICE="lva-$MY_BEST_NAME-device"
 IOTHUB_CONNECTION_STRING=$(az iot hub show-connection-string --hub-name ${IOTHUB} --query='connectionString')
 CONTAINER_REGISTRY=$(echo "${RESOURCES}" | awk '$2 ~ /Microsoft.ContainerRegistry\/registries$/ {print $1}')
 CONTAINER_REGISTRY_USERNAME=$(az acr credential show -n $CONTAINER_REGISTRY --query 'username' | tr -d \")
@@ -272,9 +273,9 @@ Finally, we'll deploy a VM that will act as your IoT Edge device for using the L
     --vnet-name $VNET \
     --subnet 'default' \
     --custom-data $CLOUD_INIT_FILE \
-    --public-ip-address "" \
+    --public-ip-address $PIP \
     --size "Standard_DS3_v2" \
-    --tags sample=lva \
+    --tags product=lva \
     --output none
 
     checkForError
