@@ -21,7 +21,7 @@
         "resourceTags": {
             "type": "object",
             "defaultValue": {
-                "sample": "lva"
+                "product": "lva"
             }
         }
     },
