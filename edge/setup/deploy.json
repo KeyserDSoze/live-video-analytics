@@ -6,10 +6,10 @@
             "metadata": {
                 "description": "Used to qualify the names of all of the resources created in this template."
             },
-            "defaultValue": "lvasample",
+            "defaultValue": "lva",
             "type": "string",
             "minLength": 3,
-            "maxLength": 13
+            "maxLength": 20
         },
         "location": {
             "metadata": {
@@ -26,14 +26,13 @@
         }
     },
     "variables": {
-        "storageAccountName": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id))]",
-        "amsAccountName": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id))]",
-        "hubName": "[concat(parameters('namePrefix'),'hub',uniqueString(resourceGroup().id))]",
-        "registryName": "[concat(parameters('namePrefix'),'registry',uniqueString(resourceGroup().id))]",
+        "storageAccountName": "[concat(parameters('namePrefix'),'-sa')]"
+        "amsAccountName": "[concat(parameters('namePrefix'),'-ams')]"
+        "hubName": "[concat(parameters('namePrefix'),'-hn')]"
+        "registryName": "[concat(parameters('namePrefix'),'-rn')]",
         "hubApiVersion": "2019-11-04",
-        "bastionName": "[concat(parameters('namePrefix'),'-bastion')]",
         "vnetName": "[concat(parameters('namePrefix'),'-vnet')]",
-        "pipName": "[concat(parameters('namePrefix'),'-bastion-pip')]"
+        "pipName": "[concat(parameters('namePrefix'),'-pip')]"
     },
     "resources": [
         {
@@ -102,7 +101,6 @@
         },
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "comments": "This vnet will host the IoT Edge device. The configuration in this template is to support an Azure Bastion connection to the VM.",
             "apiVersion": "2019-06-01",
             "name": "[variables('vnetName')]",
             "location": "[parameters('location')]",
@@ -118,12 +116,6 @@
                         "properties": {
                             "addressPrefix": "10.0.0.0/27"
                         }
-                    },
-                    {
-                        "name": "AzureBastionSubnet",
-                        "properties": {
-                            "addressPrefix": "10.0.0.32/27"
-                        }
                     }
                 ]
             },
@@ -131,7 +123,7 @@
         },
         {
             "type": "Microsoft.Network/publicIpAddresses",
-            "comments": "This is the IP address used by Azure Bastion.",
+            "comments": "This is the IP address used by VM.",
             "apiVersion": "2019-06-01",
             "name": "[variables('pipName')]",
             "location": "[parameters('location')]",
@@ -140,33 +132,6 @@
             },
             "properties": {
                 "publicIPAllocationMethod": "Static"
-            },
-            "tags": "[parameters('resourceTags')]"
-        },
-        {
-            "type": "Microsoft.Network/bastionHosts",
-            "comments": "Azure Bastion provides a secure mechanism for connecting to the IoT Edge VM. It is accessible in the portal on the VM's blade by clicking 'Connect'.",
-            "apiVersion": "2019-06-01",
-            "name": "[variables('bastionName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[variables('pipName')]",
-                "[variables('vnetName')]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "IpConf",
-                        "properties": {
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'AzureBastionSubnet')]"
-                            },
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('pipName'))]"
-                            }
-                        }
-                    }
-                ]
             },
             "tags": "[parameters('resourceTags')]"
         }
@@ -182,7 +147,7 @@
         },
         "roleName": {
             "type": "string",
-            "value": "[concat(parameters('namePrefix'),'-role-',uniqueString(subscription().id))]"
+            "value": "[concat(parameters('namePrefix'),'-cr')]"
         }
     }
 }
