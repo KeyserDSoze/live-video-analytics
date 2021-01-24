@@ -17,7 +17,7 @@ RED='\033[0;31m'
 BLUE='\033[1;34m'
 NC='\033[0m' # No Color
 
-echo -e "\n${RED}Please insert the prefix"
+echo -e "\nPlease insert the prefix"
 read -p ">> " MY_BEST_NAME
 
 # script configuration
@@ -33,8 +33,8 @@ DEPLOYMENT_MANIFEST_URL="$BASE_URL/deployment.template.json"
 DEPLOYMENT_MANIFEST_FILE='edge-deployment/deployment.amd64.json'
 ROLE_DEFINITION_URL="$BASE_URL/LVAEdgeUserRoleDefinition.json"
 ROLE_DEFINITION_FILE='role_definition.json'
-RESOURCE_GROUP='$MY_BEST_NAME-lva-rg'
-IOT_EDGE_VM_NAME='$MY_BEST_NAME-lva-iot-edge-device'
+RESOURCE_GROUP="$MY_BEST_NAME-lva-rg"
+IOT_EDGE_VM_NAME="$MY_BEST_NAME-lva-iot-edge-device"
 IOT_EDGE_VM_ADMIN='lvaadmin'
 IOT_EDGE_VM_PWD="lvaPwdKS@$(shuf -i 1000-999999 -n 1)"
 CLOUD_SHELL_FOLDER="$HOME/clouddrive/lva-$MY_BEST_NAME"
