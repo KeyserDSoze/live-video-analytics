@@ -27,8 +27,8 @@
     },
     "variables": {
         "storageAccountName": "[tolower(concat(parameters('namePrefix'),'sa'))]",
-        "amsAccountName": "[tolower(concat(parameters('namePrefix'),'-ams'))]",
-        "hubName": "[tolower(concat(parameters('namePrefix'),'-hn'))]",
+        "amsAccountName": "[tolower(concat(parameters('namePrefix'),'ams'))]",
+        "hubName": "[tolower(concat(parameters('namePrefix'),'n'))]",
         "registryName": "[tolower(concat(parameters('namePrefix'),'rn'))]",
         "hubApiVersion": "2019-11-04",
         "vnetName": "[tolower(concat(parameters('namePrefix'),'-vnet'))]",
