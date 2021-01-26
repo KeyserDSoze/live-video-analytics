@@ -27,12 +27,12 @@
     },
     "variables": {
         "storageAccountName": "[tolower(concat(parameters('namePrefix'),'sa'))]",
-        "amsAccountName": "[concat(parameters('namePrefix'),'-ams')]",
-        "hubName": "[concat(parameters('namePrefix'),'-hn')]",
-        "registryName": "[concat(parameters('namePrefix'),'-rn')]",
+        "amsAccountName": "[tolower(concat(parameters('namePrefix'),'-ams'))]",
+        "hubName": "[tolower(concat(parameters('namePrefix'),'-hn'))]",
+        "registryName": "[tolower(concat(parameters('namePrefix'),'rn'))]",
         "hubApiVersion": "2019-11-04",
-        "vnetName": "[concat(parameters('namePrefix'),'-vnet')]",
-        "pipName": "[concat(parameters('namePrefix'),'-pip')]"
+        "vnetName": "[tolower(concat(parameters('namePrefix'),'-vnet'))]",
+        "pipName": "[tolower(concat(parameters('namePrefix'),'-pip'))]"
     },
     "resources": [
         {
