@@ -17,7 +17,7 @@ RED='\033[0;31m'
 BLUE='\033[1;34m'
 NC='\033[0m' # No Color
 
-echo -e "\n${NC}Please insert the prefix"
+echo -e "\n${NC}Please insert the prefix for the names"
 read -p ">> " MY_BEST_NAME
 
 # script configuration
@@ -154,6 +154,12 @@ echo -e "\n${GREEN}Please specify a good password for your VM.${NC}"
 read -p ">> " IOT_EDGE_VM_PWD
 echo -e "your password will be ${IOT_EDGE_VM_PWD}."
 
+# create parameter json file needed for deploying the template
+PARAMS_FILENAME=$MY_BEST_NAME"_parameters.json"
+jq -n --arg nameval "$MY_BEST_NAME" '{namePrefix: {value: $nameval} }' > $PARAMS_FILENAME
+
+
+
 # deploy resources using a template
 echo -e "
 Now we'll deploy some resources to ${GREEN}${RESOURCE_GROUP}.${NC}
@@ -162,7 +168,7 @@ This typically takes about 6 minutes, but the time may vary.
 The resources are defined in a template here:
 ${BLUE}${ARM_TEMPLATE_URL}${NC}"
 
-ROLE_DEFINITION_NAME=$(az deployment group create --resource-group $RESOURCE_GROUP --template-uri $ARM_TEMPLATE_URL --parameters '{ \"namePrefix\": { \"value\": \"$MY_BEST_NAME\" } }' --query properties.outputs.roleName.value | tr -d \")
+ROLE_DEFINITION_NAME=$(az deployment group create --resource-group $RESOURCE_GROUP --template-uri $ARM_TEMPLATE_URL --parameters @$PARAMS_FILENAME --query properties.outputs.roleName.value | tr -d \")
 checkForError
 
 # query the resource group to see what has been deployed
