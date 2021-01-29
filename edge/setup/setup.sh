@@ -363,6 +363,7 @@ You can find the deployment manifest file here:
 
 echo -e "
 
+az iot edge set-modules --device-id $EDGE_DEVICE --hub-name $IOTHUB --content $DEPLOYMENT_MANIFEST_FILE
 
 Next, copy these generated files into your local copy of the sample app:
 - ${BLUE}${APP_SETTINGS_FILE}${NC}
