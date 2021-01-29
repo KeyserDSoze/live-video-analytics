@@ -17,8 +17,8 @@ RED='\033[0;31m'
 BLUE='\033[1;34m'
 NC='\033[0m' # No Color
 
-echo -e "\n${NC}Please insert the prefix for the names"
-read -p ">> " MY_BEST_NAME
+echo -e "\n${NC}Please provide a prefix for all names"
+read -p ">> " RES_NAME_PREFIX
 
 # script configuration
 BASE_URL='https://raw.githubusercontent.com/KeyserDSoze/live-video-analytics/master/edge/setup' # location of remote files used by the script
@@ -33,16 +33,15 @@ DEPLOYMENT_MANIFEST_URL="$BASE_URL/deployment.template.json"
 DEPLOYMENT_MANIFEST_FILE='edge-deployment/deployment.amd64.json'
 ROLE_DEFINITION_URL="$BASE_URL/LVAEdgeUserRoleDefinition.json"
 ROLE_DEFINITION_FILE='role_definition.json'
-RESOURCE_GROUP="$MY_BEST_NAME-lva-rg"
-IOT_EDGE_VM_NAME="$MY_BEST_NAME-lva-iot-edge-device"
-IOT_EDGE_VM_ADMIN='lvaadmin'
-IOT_EDGE_VM_PWD="lvaPwdKS@$(shuf -i 1000-999999 -n 1)"
-CLOUD_SHELL_FOLDER="$HOME/clouddrive/lva-$MY_BEST_NAME"
+RESOURCE_GROUP="$RES_NAME_PREFIX-lva-rg"
+IOT_EDGE_VM_NAME="$RES_NAME_PREFIX-lva-iot-edge-device"
+IOT_EDGE_VM_ADMIN='lvaadmin' # this is used later to build the INPUT_VIDEO_FOLDER_ON_DEVICE 
+CLOUD_SHELL_FOLDER="$HOME/clouddrive/lva-$RES_NAME_PREFIX"
 APPDATA_FOLDER_ON_DEVICE="/var/lib/azuremediaservices"
 
 checkForError() {
     if [ $? -ne 0 ]; then
-        echo -e "\n${RED}Something went wrong:${NC}
+        echo -e "\n${RED}Houston, we have a problem:${NC}
     Please read any error messages carefully.
     After addressing any errors, you can safely run this script again.
     Note:
@@ -150,15 +149,20 @@ if ! $EXISTING; then
     checkForError
 fi
 
-echo -e "\n${GREEN}Please specify a good password for your VM.${NC}"
+# 
+echo -e "\n${GREEN}Please specify a good password for your VM.${NC} (min 8 chars)"
+echo -e "\n${NC}Press ENTER to generate one automatically.${NC}"
 read -p ">> " IOT_EDGE_VM_PWD
+if [ -z "$IOT_EDGE_VM_PWD" ] || [ ${#IOT_EDGE_VM_PWD} -lt 8 ]
+then
+      IOT_EDGE_VM_PWD=$(date +%s | sha256sum | base64 | head -c 16 ; echo)
+fi 
+
 echo -e "your password will be ${IOT_EDGE_VM_PWD}."
 
 # create parameter json file needed for deploying the template
-PARAMS_FILENAME=$MY_BEST_NAME"_parameters.json"
-jq -n --arg nameval "$MY_BEST_NAME" '{namePrefix: {value: $nameval} }' > $PARAMS_FILENAME
-
-
+PARAMS_FILENAME=$RES_NAME_PREFIX"_parameters.json"
+jq -n --arg nameval "$RES_NAME_PREFIX" '{namePrefix: {value: $nameval} }' > $PARAMS_FILENAME
 
 # deploy resources using a template
 echo -e "
@@ -181,9 +185,9 @@ echo "${RESOURCES}"
 IOTHUB=$(echo "${RESOURCES}" | awk '$2 ~ /Microsoft.Devices\/IotHubs$/ {print $1}')
 AMS_ACCOUNT=$(echo "${RESOURCES}" | awk '$2 ~ /Microsoft.Media\/mediaservices$/ {print $1}')
 VNET=$(echo "${RESOURCES}" | awk '$2 ~ /Microsoft.Network\/virtualNetworks$/ {print $1}')
-PIP=$(echo "${RESOURCES}" | awk '$2 ~ /Microsoft.Network\/publicIpAddresses$/ {print $1}')
-EDGE_DEVICE="lva-$MY_BEST_NAME-device"
-IOTHUB_CONNECTION_STRING=$(az iot hub show-connection-string --hub-name ${IOTHUB} --query='connectionString')
+PIP=$(echo "${RESOURCES}" | awk '$2 ~ /Microsoft.Network\/publicIPAddresses$/ {print $1}')
+EDGE_DEVICE="lva-$RES_NAME_PREFIX-device"
+IOTHUB_CONNECTION_STRING=$(az iot hub connection-string show --hub-name ${IOTHUB} --query='connectionString')
 CONTAINER_REGISTRY=$(echo "${RESOURCES}" | awk '$2 ~ /Microsoft.ContainerRegistry\/registries$/ {print $1}')
 CONTAINER_REGISTRY_USERNAME=$(az acr credential show -n $CONTAINER_REGISTRY --query 'username' | tr -d \")
 CONTAINER_REGISTRY_PASSWORD=$(az acr credential show -n $CONTAINER_REGISTRY --query 'passwords[0].value' | tr -d \")
@@ -201,7 +205,7 @@ if test -z "$(az iot hub device-identity list -n $IOTHUB | grep "deviceId" | gre
     az iot hub device-identity create --hub-name $IOTHUB --device-id $EDGE_DEVICE --edge-enabled -o none
     checkForError
 fi
-DEVICE_CONNECTION_STRING=$(az iot hub device-identity show-connection-string --device-id $EDGE_DEVICE --hub-name $IOTHUB --query='connectionString')
+DEVICE_CONNECTION_STRING=$(az iot hub device-identity connection-string show --device-id $EDGE_DEVICE --hub-name $IOTHUB --query='connectionString')
 
 # creating the AMS account creates a service principal, so we'll just reset it to get the credentials
 echo "setting up service principal..."
@@ -227,22 +231,22 @@ re="SubscriptionId:\s([0-9a-z\-]*)"
 SUBSCRIPTION_ID=$([[ "$AMS_CONNECTION" =~ $re ]] && echo ${BASH_REMATCH[1]})
 
 # create new role definition in the subscription
- if test -z "$(az role definition list -n "$ROLE_DEFINITION_NAME" | grep "roleName")"; then
-    echo -e "Creating a custom role named ${BLUE}$ROLE_DEFINITION_NAME${NC}."
-    curl -sL $ROLE_DEFINITION_URL > $ROLE_DEFINITION_FILE
-    sed -i "s/\$SUBSCRIPTION_ID/$SUBSCRIPTION_ID/" $ROLE_DEFINITION_FILE
-    sed -i "s/\$ROLE_DEFINITION_NAME/$ROLE_DEFINITION_NAME/" $ROLE_DEFINITION_FILE
-    
-    az role definition create --role-definition $ROLE_DEFINITION_FILE -o none
-    checkForError
- fi
+# if test -z "$(az role definition list -n "$ROLE_DEFINITION_NAME" | grep "roleName")"; then
+#    echo -e "Creating a custom role named ${BLUE}$ROLE_DEFINITION_NAME${NC}."
+#    curl -sL $ROLE_DEFINITION_URL > $ROLE_DEFINITION_FILE
+#    sed -i "s/\$SUBSCRIPTION_ID/$SUBSCRIPTION_ID/" $ROLE_DEFINITION_FILE
+#    sed -i "s/\$ROLE_DEFINITION_NAME/$ROLE_DEFINITION_NAME/" $ROLE_DEFINITION_FILE
+#    
+#    az role definition create --role-definition $ROLE_DEFINITION_FILE -o none
+#    checkForError
+# fi
 
 # capture object_id
 OBJECT_ID=$(az ad sp show --id ${AAD_SERVICE_PRINCIPAL_ID} --query 'objectId' | tr -d \")
 
 # create role assignment
- az role assignment create --role "$ROLE_DEFINITION_NAME" --assignee-object-id $OBJECT_ID -o none
- echo -e "The service principal with object id ${OBJECT_ID} is now linked with custom role ${BLUE}$ROLE_DEFINITION_NAME${NC}."
+#az role assignment create --role "$ROLE_DEFINITION_NAME" --assignee-object-id $OBJECT_ID -o none
+#echo -e "The service principal with object id ${OBJECT_ID} is now linked with custom role ${BLUE}$ROLE_DEFINITION_NAME${NC}."
 
 # The brand-new AMS account has a standard streaming endpoint in stopped state. 
 # A Premium streaming endpoint is recommended when recording multiple daysÃ¢â‚¬â„¢ worth of video
