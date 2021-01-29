@@ -151,14 +151,14 @@ fi
 
 # 
 echo -e "\n${GREEN}Please specify a good password for your VM.${NC} (min 8 chars)"
-echo -e "\n${NC}Press ENTER to generate one automatically.${NC}"
+echo -e "${NC}Press ENTER to generate one automatically.${NC}"
 read -p ">> " IOT_EDGE_VM_PWD
 if [ -z "$IOT_EDGE_VM_PWD" ] || [ ${#IOT_EDGE_VM_PWD} -lt 8 ]
 then
       IOT_EDGE_VM_PWD=$(date +%s | sha256sum | base64 | head -c 16 ; echo)
 fi 
 
-echo -e "your password will be ${IOT_EDGE_VM_PWD}."
+echo -e "your password will be ${BLUE}${IOT_EDGE_VM_PWD}${NC}."
 
 # create parameter json file needed for deploying the template
 PARAMS_FILENAME=$RES_NAME_PREFIX"_parameters.json"
